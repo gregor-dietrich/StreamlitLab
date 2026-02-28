@@ -1,0 +1,67 @@
+services:
+  streamlitlab:
+    image: streamlitlab:1.0.0-SNAPSHOT
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      TZ: UTC
+      STREAMLITLAB_SQL_USERNAME: ${STREAMLITLAB_SQL_USERNAME:-streamlitlab}
+      STREAMLITLAB_SQL_PASSWORD: ${STREAMLITLAB_SQL_PASSWORD:-changeit}
+      STREAMLITLAB_SQL_DATABASE: ${STREAMLITLAB_SQL_DATABASE:-streamlitlab}
+    ports:
+      - "52134:80/tcp"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider -q http://127.0.0.1/_stcore/health || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18.3-alpine3.23
+    restart: unless-stopped
+    command: ["postgres", "-c", "max_connections=200"]
+    environment:
+      TZ: UTC
+      POSTGRES_USER: ${STREAMLITLAB_SQL_USERNAME:-streamlitlab}
+      POSTGRES_PASSWORD: ${STREAMLITLAB_SQL_PASSWORD:-changeit}
+      POSTGRES_DB: ${STREAMLITLAB_SQL_DATABASE:-streamlitlab}
+      POSTGRES_PORT: 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${STREAMLITLAB_SQL_USERNAME:-streamlitlab} -d ${STREAMLITLAB_SQL_DATABASE:-streamlitlab}"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  pgadmin:
+    image: dpage/pgadmin4:9.12.0
+    restart: unless-stopped
+    environment:
+      TZ: UTC
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-changeit}
+    ports:
+      - "42069:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider -q http://pgadmin/ || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgadmin_data:
+  postgres_data:
