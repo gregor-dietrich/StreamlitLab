@@ -1,59 +1,50 @@
 import logging
-from typing import Any
+from typing import ClassVar
 
-import numpy as np
-import pandas as pd
 import streamlit as st
 
 from streamlitlab.utils.config import Config
 
-_log: logging.Logger = logging.getLogger(__file__)
 
+class App:
+    """Singleton Streamlit application.
 
-def configure_logging() -> None:
-    """Set up logging."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        datefmt="%d-%m-%Y %H:%M:%S",
-    )
+    Only one instance is ever created; subsequent calls return the
+    cached instance.
+    """
 
+    _instance: ClassVar["App | None"] = None
 
-def main() -> None:
-    cfg = Config()
-    configure_logging()
-    _log.info(cfg.data)
+    def __new__(cls) -> "App":
+        if cls._instance is None:
+            instance = super().__new__(cls)
+            instance._initialized = False
+            cls._instance = instance
+        return cls._instance
 
-    st.write(
-        "Got lots of data? Great! Streamlit can show "
-        "[dataframes](https://docs.streamlit.io/develop/api-reference/data) "
-        "with hundred thousands of rows, images, sparklines – and even "
-        "supports editing! ✍️"
-    )
+    def __init__(self) -> None:
+        if self._initialized:
+            return
+        self._initialized = True
+        self._log: logging.Logger = logging.getLogger(__class__.__name__)
+        self.cfg: Config = Config()
+        self._configure_logging()
+        self._log.info("App initialized")
 
-    num_rows = st.slider("Number of rows", 1, 10000, 500)
-    np.random.seed(42)
-    data_list: list[dict[str, Any]] = []
-    for i in range(num_rows):
-        data_list.append(
-            {
-                "Preview": f"https://picsum.photos/400/200?lock={i}",
-                "Views": np.random.randint(0, 1000),
-                "Active": np.random.choice([True, False]),
-                "Category": np.random.choice(["🤖 LLM", "📊 Data", "⚙️ Tool"]),
-                "Progress": np.random.randint(1, 100),
-            }
+    def _configure_logging(self) -> None:
+        """Set up logging."""
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            datefmt="%d-%m-%Y %H:%M:%S",
         )
-    data: pd.DataFrame = pd.DataFrame(data_list)
 
-    config: dict[str, Any] = {
-        "Preview": st.column_config.ImageColumn(),
-        "Progress": st.column_config.ProgressColumn(),
-    }
-
-    if st.toggle("Enable editing"):
-        edited_data = st.data_editor(
-            data, column_config=config, width="stretch"
+    def run(self) -> None:
+        st.set_page_config(
+            layout="centered",
+            page_title="StreamlitLab",
+            page_icon=":material/crown:",
         )
-    else:
-        st.dataframe(data, column_config=config, width="stretch")
+
+        st.write("Hello world!")
+        self._log.info("run() completed")

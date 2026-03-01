@@ -11,7 +11,7 @@ RUN apk add --no-cache --virtual .build-deps build-base linux-headers \
     && apk del .build-deps \
     && rm requirements.txt
 
-COPY .streamlit .streamlit
+COPY .streamlit/prod.config.toml .streamlit/config.toml
 COPY main.py .
 COPY src/ src/
 

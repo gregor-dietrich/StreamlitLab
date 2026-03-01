@@ -6,6 +6,12 @@ from pathlib import Path
 # installing the project.
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from streamlitlab.app import main
+from streamlitlab.app import App
+
+
+def main() -> None:
+    app: App = App()
+    app.run()
+
 
 main()

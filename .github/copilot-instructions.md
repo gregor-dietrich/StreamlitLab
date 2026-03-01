@@ -7,6 +7,7 @@
 - Type-annotate all function signatures (see `def main() -> None:` in `src/streamlitlab/app.py`)
 - snake_case for functions/variables, lowercase package names
 - Use `import streamlit as st` — always reference via `st.` prefix
+- **Logging:** avoid printing directly to stdout/stderr. Obtain a `logging.Logger` via `logging.getLogger(__name__)` or with a classname and rely on the configured handlers.
 - **Ruff** for linting and formatting — config in `pyproject.toml` (`[tool.ruff]`)
 - Rule sets: `E`, `F`, `W`, `I`, `UP`, `B`, `SIM`, `RUF` — run `ruff check .` and `ruff format .`
 
